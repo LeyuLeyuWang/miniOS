@@ -8,6 +8,8 @@
 #include "global.h"
 #include "process.h"
 #include "../games/snake/snake.h"
+#include "../lib/lib.h"
+
 extern char keyboard_input(void);
 extern void disable_tty_output(void);
 /* 声明已有的函数，供我们调用 */
@@ -166,12 +168,64 @@ PUBLIC void init_clock()
 /*======================================================================*
                                TestB
  *======================================================================*/
+/*======================================================================*
+                               TestB
+ *======================================================================*/
 void TestB()
 {
+    disable_tty_output();  /* 关闭原来的 TTY 输出，让我们独占键盘和屏幕 */
+    clear();
+
     while (1) {
-        milli_delay(1000);   // 或者什么都不做
+        char choice = 0;
+
+        /* 每一轮先打印菜单 */
+        show_menu();
+
+        /* 等待用户输入“数字 + Enter” */
+        while (1) {
+            unsigned char ch = (unsigned char)keyboard_input();
+
+            if (ch == 0) {
+                /* 没有按键就继续等 */
+                continue;
+            }
+
+            /* 如果按的是 1~4，就记录下来，并回显一下 */
+            if (ch >= '1' && ch <= '4') {
+                choice = (char)ch;
+                printf("%c", choice);   /* 在屏幕上显示这个数字 */
+            }
+            /* 如果按的是 Enter（用 snake.h 里定义的 ENTER 宏） */
+            else if (ch == ENTER) {
+                /* 用户按了回车，结束本轮输入 */
+                break;
+            }
+            /* 其他键直接忽略 */
+        }
+
+        /* 根据最终选择的数字执行对应功能 */
+        switch (choice) {
+        case '1':
+            feature_snake();
+            break;
+        case '2':
+            feature_uptime();
+            break;
+        case '3':
+            feature_clear();
+            break;
+        case '4':
+            feature_about();
+            break;
+        default:
+            printf("\nInvalid choice. Please enter 1-4.\n");
+            break;
+        }
+
+        /* 执行完一个功能后，清屏，然后下一轮再显示菜单 */
+        clear();
     }
 }
-
 
 
