@@ -1,10 +1,10 @@
 # MiniOS build system
 .RECIPEPREFIX := >
 
-CC = i386-elf-gcc
-LD = i386-elf-ld
+CC = gcc
+LD = ld
 AS = nasm
-OBJCOPY = i386-elf-objcopy
+OBJCOPY = objcopy
 
 CFLAGS := -std=gnu99 -ffreestanding -O2 -Wall -Wextra -m32 -Isrc -Isrc/lib
 LDFLAGS := -T linker.ld -m elf_i386 -nostdlib
@@ -12,7 +12,7 @@ LDFLAGS := -T linker.ld -m elf_i386 -nostdlib
 C_SOURCES := $(shell find src -name "*.c" ! -path "src/boot/*")
 ASM_SOURCES := $(shell find src -name "*.asm" ! -path "src/boot/*")
 C_OBJS := $(patsubst src/%.c,build/%.o,$(C_SOURCES))
-ASM_OBJS := $(patsubst src/%.asm,build/%.o,$(ASM_SOURCES))
+ASM_OBJS := $(patsubst src/%.asm,build/%_asm.o,$(ASM_SOURCES))
 OBJS := $(C_OBJS) $(ASM_OBJS)
 
 BOOT_BIN := build/boot.bin
@@ -41,7 +41,7 @@ build/%.o: src/%.c | dirs
 > @mkdir -p $(dir $@)
 > $(CC) $(CFLAGS) -c $< -o $@
 
-build/%.o: src/%.asm | dirs
+build/%_asm.o: src/%.asm | dirs
 > @mkdir -p $(dir $@)
 > $(AS) -f elf32 $< -o $@
 

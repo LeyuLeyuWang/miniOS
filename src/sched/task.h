@@ -1,7 +1,7 @@
 #ifndef MINI_TASK_H
 #define MINI_TASK_H
 
-#include <stdint.h>
+#include "stdint.h"
 
 struct task {
     uint32_t id;

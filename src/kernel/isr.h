@@ -1,12 +1,8 @@
 #ifndef MINI_ISR_H
 #define MINI_ISR_H
 
-#include <stdint.h>
+#include "stdint.h"
 
-// Interrupt Service Routine installer
-void isr_install(void);
-
-// Interrupt handler type
 struct regs {
     uint32_t ds;
     uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
@@ -16,4 +12,7 @@ struct regs {
 
 typedef void (*isr_t)(struct regs *r);
 
-#endif // MINI_ISR_H
+// Interrupt Service Routine installer
+void isr_install(void);
+
+#endif /* MINI_ISR_H */
