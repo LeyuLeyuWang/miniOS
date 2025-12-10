@@ -10,10 +10,13 @@ SECTIONS
     .text : AT(KERNEL_LMA) {
         *(.text*)
         *(.rodata*)
+        *(.eh_frame)
     }
 
     .data : AT(LOADADDR(.text) + SIZEOF(.text)) {
         *(.data*)
+        *(.got*)
+        *(.got.plt)
     }
 
     .bss : AT(LOADADDR(.data) + SIZEOF(.data)) {

@@ -1,7 +1,7 @@
 #ifndef MINI_PMM_H
 #define MINI_PMM_H
 
-#include <stdint.h>
+#include "stdint.h"
 
 void pmm_init(uint32_t mem_size);
 void *pmm_alloc_block(void);
