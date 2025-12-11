@@ -126,18 +126,20 @@ static int move_snake()
 
 static void handle_input()
 {
-    char key = keyboard_input();
+    int key = keyboard_input();
     if (key == 0) {
         return;
     }
 
-    if ((key == 'w' || key == 'W' || key == UP) && direction != Down) {
+    int low = key & 0xFF;
+
+    if ((low == 'w' || low == 'W' || key == UP || key == PAD_UP) && direction != Down) {
         direction = Up;
-    } else if ((key == 's' || key == 'S' || key == DOWN) && direction != Up) {
+    } else if ((low == 's' || low == 'S' || key == DOWN || key == PAD_DOWN) && direction != Up) {
         direction = Down;
-    } else if ((key == 'a' || key == 'A' || key == LEFT) && direction != Right) {
+    } else if ((low == 'a' || low == 'A' || key == LEFT || key == PAD_LEFT) && direction != Right) {
         direction = Left;
-    } else if ((key == 'd' || key == 'D' || key == RIGHT) && direction != Left) {
+    } else if ((low == 'd' || low == 'D' || key == RIGHT || key == PAD_RIGHT) && direction != Left) {
         direction = Right;
     }
 }
@@ -163,3 +165,4 @@ void game_start()
     printf("\nGame Over! Press any key to return to the menu.\n");
     wait_for_key_press();
 }
+

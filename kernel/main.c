@@ -7,10 +7,11 @@
 #include "func.h"
 #include "global.h"
 #include "process.h"
+#include "keyboard.h"
 #include "../games/snake/snake.h"
 #include "../lib/lib.h"
 
-extern char keyboard_input(void);
+extern int keyboard_input(void);
 extern void disable_tty_output(void);
 /* 声明已有的函数，供我们调用 */
 extern void game_start();     /* 贪吃蛇，原来就有 */
@@ -18,9 +19,11 @@ extern void clear();          /* 清屏 */
 extern int  get_ticks();      /* 时钟 tick，内核已有封装 */
 
 /* 键值工具函数 */
-static int is_enter_key(char key)
+static int is_enter_key(int key)
 {
-    return key == '\n' || key == '\r' || key == 0x1C || key == 0x03;
+    int low = key & 0xFF;
+    /* ENTER / PAD_ENTER 宏来自 keyboard.h，如果没有可以去掉这两项 */
+    return key == ENTER || key == PAD_ENTER || low == '\n' || low == '\r' || low == 0x1C || low == 0x03;
 }
 
 static void wait_for_any_key(void)
@@ -44,16 +47,19 @@ static char read_menu_choice(void)
 {
     char selection = 0;
     while (1) {
-        char key = keyboard_input();
+        int key = keyboard_input();
         if (key == 0) {
             continue;
         }
 
-        if (key >= '1' && key <= '4') {
-            selection = key;
+        int low = key & 0xFF;
+
+        if (low >= '1' && low <= '4') {
+            selection = low;
             printf("%c", selection);
         } else if (is_enter_key(key)) {
-            return selection;
+            printf("\n");
+            return selection;  /* 如果没选过数字，这里返回 0，外层会提示重输 */
         }
     }
 }
@@ -208,9 +214,6 @@ PUBLIC void init_clock()
 /*======================================================================*
                                TestB
  *======================================================================*/
-/*======================================================================*
-                               TestB
- *======================================================================*/
 void TestB()
 {
     disable_tty_output();  /* 关闭原来的 TTY 输出，让我们独占键盘和屏幕 */
@@ -247,5 +250,3 @@ void TestB()
         }
     }
 }
-
-

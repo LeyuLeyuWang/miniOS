@@ -88,6 +88,6 @@ PUBLIC int printf(const char* fmt, ...);
 PUBLIC char* itoa10(char* str, int num);
 PUBLIC int strlen(char* str);
 PUBLIC void clear();
-PUBLIC char keyboard_input();
+PUBLIC int keyboard_input();
 PUBLIC int random(int max);
 
