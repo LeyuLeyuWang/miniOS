@@ -165,3 +165,4 @@ void game_start()
     printf("\nGame Over! Press any key to return to the menu.\n");
     wait_for_key_press();
 }
+

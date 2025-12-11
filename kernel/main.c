@@ -22,6 +22,7 @@ extern int  get_ticks();      /* 时钟 tick，内核已有封装 */
 static int is_enter_key(int key)
 {
     int low = key & 0xFF;
+    /* ENTER / PAD_ENTER 宏来自 keyboard.h，如果没有可以去掉这两项 */
     return key == ENTER || key == PAD_ENTER || low == '\n' || low == '\r' || low == 0x1C || low == 0x03;
 }
 
@@ -58,7 +59,7 @@ static char read_menu_choice(void)
             printf("%c", selection);
         } else if (is_enter_key(key)) {
             printf("\n");
-            return selection;
+            return selection;  /* 如果没选过数字，这里返回 0，外层会提示重输 */
         }
     }
 }
@@ -213,9 +214,6 @@ PUBLIC void init_clock()
 /*======================================================================*
                                TestB
  *======================================================================*/
-/*======================================================================*
-                               TestB
- *======================================================================*/
 void TestB()
 {
     disable_tty_output();  /* 关闭原来的 TTY 输出，让我们独占键盘和屏幕 */
@@ -252,5 +250,3 @@ void TestB()
         }
     }
 }
-
-
