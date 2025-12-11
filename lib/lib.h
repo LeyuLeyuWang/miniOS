@@ -8,7 +8,7 @@ int printf(const char* fmt, ...);
 char* itoa10(char* str, int num);
 int strlen(char* str);
 void clear();
-char keyboard_input();
+int keyboard_input();
 void sleep(int milli_sec);
 int random(int max);
 

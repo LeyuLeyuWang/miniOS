@@ -113,9 +113,9 @@ PUBLIC void clear()
     clscreen();
 }
 
-PUBLIC char keyboard_input()
+PUBLIC int keyboard_input()
 {
-    char key = sys_char;
+    int key = sys_char;
     sys_char = 0;
     return key;
 }

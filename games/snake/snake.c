@@ -1,179 +1,167 @@
 #include "snake.h"
 #include "../../lib/lib.h"
 
-char screen[ROW][COLUMN + 1];
-int direction = Right;
-Node snake[ROW * COLUMN];
-int head = 0;
-int gameover = 1;
-Node food = {-1, -1};
+#define BOARD_WIDTH  30
+#define BOARD_HEIGHT 15
+#define MAX_SNAKE_LENGTH (BOARD_WIDTH * BOARD_HEIGHT)
 
-void init_scr()
+static Node snake_body[MAX_SNAKE_LENGTH];
+static int  snake_length = 0;
+static Node food = {-1, -1};
+static int  direction = Right;
+static int  game_over = 0;
+
+static void wait_for_key_press()
 {
-    for (int i = 0; i < ROW; i++) {
-        for (int j = 0; j < COLUMN + 1; j++) {
-            screen[i][j] = ' ';
-            if (j == COLUMN) {
-                screen[i][j] = '\0';
-            }
-        }
-    }
+    while (keyboard_input() == 0) {}
 }
 
-void init_snake()
+static int is_snake_cell(int x, int y)
 {
-    direction = Right;
-    for (int i = 0; i < ROW * COLUMN; i++) {
-        snake[i].x = snake[i].y = -1;
-    }
-    for (int i = 0; i < INIT_LENGTH; i++) {
-        snake[i].x = i;
-        snake[i].y = 0;
-        head = i;
-    }
-    copy();
-}
-
-void copy()
-{
-    init_scr();
-    for (int i = head; i >= 0; i--) {
-        screen[snake[i].y][snake[i].x] = '*';
-    }
-    screen[food.y][food.x] = '*';
-}
-
-void draw()
-{
-    for (int i = 0; i < ROW; i++) {
-        printf(screen[i]);
-    }
-}
-
-
-void move()
-{
-    Node next;
-    if (direction == Left) {
-        next.x = snake[head].x - 1;
-        next.y = snake[head].y;
-    } else if (direction == Right) {
-        next.x = snake[head].x + 1;
-        next.y = snake[head].y;
-    } else if (direction == Up) {
-        next.y = snake[head].y - 1;
-        next.x = snake[head].x;
-    } else {
-        next.y = snake[head].y + 1;
-        next.x = snake[head].x;
-    }
-    if (next.x == food.x && next.y == food.y) {
-        eat();
-        generate_food();
-    }
-    else {
-        for (int i = 0; i < head; i++) {
-            snake[i] = snake[i + 1];
-        }
-        snake[head] = next;
-    }
-    
-    if (snake[head].x < 0 || snake[head].x > COLUMN || snake[head].y < 0 ||
-        snake[head].y > ROW || overlap(snake[head])) {
-        game_over();
-    }
-    copy();
-}
-
-int overlap(Node node)
-{
-    for (int i = 0; i < head; i++) {
-        if (snake[i].x == node.x && 
-            snake[i].y == node.y) {
+    for (int i = 0; i < snake_length; i++) {
+        if (snake_body[i].x == x && snake_body[i].y == y) {
             return 1;
         }
     }
     return 0;
 }
 
-void game_over()
+void init_snake()
 {
-    gameover = 1;
-    printf("Game Over!!\tPress Enter to Restart!");
-}
-
-void game_restart()
-{
-    clear();
-    init_snake();
-    generate_food();
-    gameover = 0;
-}
-
-void eat()
-{
-    snake[++head] = food;
-}
-
-void keyboard()
-{
-    char key = keyboard_input();
-    switch(key) {
-        case UP:
-            if (direction != Down) {
-                direction = Up; 
-            }
-            break;
-        case DOWN:
-            if (direction != Up) {
-                direction = Down;
-            } 
-            break;
-        case LEFT:
-            if (direction != Right) {
-                direction = Left;
-            }
-            break;
-        case RIGHT:
-            if (direction != Left) {
-                direction = Right;
-            }
-            break;
-        case ENTER:
-            if (gameover) {
-                game_restart();
-            }
-            break;
-        default:
-            break;
+    direction = Right;
+    snake_length = INIT_LENGTH;
+    int start_x = BOARD_WIDTH / 2 - 1;
+    int start_y = BOARD_HEIGHT / 2;
+    for (int i = 0; i < snake_length; i++) {
+        snake_body[i].x = start_x - (snake_length - 1 - i);
+        snake_body[i].y = start_y;
     }
 }
 
-void generate_food()
+static void place_food()
 {
     do {
-        int x = random(COLUMN);
-        int y = random(ROW);
-        food.x = x;
-        food.y = y;
-    } while (overlap(food));
-    screen[food.y][food.x] = '*';
+        food.x = random(BOARD_WIDTH);
+        food.y = random(BOARD_HEIGHT);
+    } while (is_snake_cell(food.x, food.y));
 }
 
+static void draw_board()
+{
+    char border[BOARD_WIDTH + 3];
+    for (int i = 0; i < BOARD_WIDTH + 2; i++) {
+        border[i] = '#';
+    }
+    border[BOARD_WIDTH + 2] = '\0';
+
+    printf("============== Snake ==============\n");
+    printf("Controls: Arrow Keys or WASD\n");
+    printf("Food: @  Snake: O\n\n");
+
+    printf("%s\n", border);
+    for (int y = 0; y < BOARD_HEIGHT; y++) {
+        char line[BOARD_WIDTH + 3];
+        line[0] = '#';
+        for (int x = 0; x < BOARD_WIDTH; x++) {
+            line[x + 1] = ' ';
+        }
+        line[BOARD_WIDTH + 1] = '#';
+        line[BOARD_WIDTH + 2] = '\0';
+
+        for (int i = 0; i < snake_length; i++) {
+            if (snake_body[i].y == y) {
+                int pos = snake_body[i].x + 1;
+                if (pos >= 1 && pos <= BOARD_WIDTH) {
+                    line[pos] = (i == snake_length - 1) ? 'O' : 'o';
+                }
+            }
+        }
+
+        if (food.y == y && food.x >= 0 && food.x < BOARD_WIDTH) {
+            line[food.x + 1] = '@';
+        }
+
+        printf("%s\n", line);
+    }
+    printf("%s\n", border);
+}
+
+static int move_snake()
+{
+    Node head = snake_body[snake_length - 1];
+    Node next = head;
+
+    if (direction == Left) {
+        next.x -= 1;
+    } else if (direction == Right) {
+        next.x += 1;
+    } else if (direction == Up) {
+        next.y -= 1;
+    } else {
+        next.y += 1;
+    }
+
+    if (next.x < 0 || next.x >= BOARD_WIDTH || next.y < 0 || next.y >= BOARD_HEIGHT) {
+        return 0;
+    }
+    if (is_snake_cell(next.x, next.y)) {
+        return 0;
+    }
+
+    if (next.x == food.x && next.y == food.y) {
+        if (snake_length < MAX_SNAKE_LENGTH) {
+            snake_body[snake_length] = next;
+            snake_length++;
+            place_food();
+        }
+    } else {
+        for (int i = 0; i < snake_length - 1; i++) {
+            snake_body[i] = snake_body[i + 1];
+        }
+        snake_body[snake_length - 1] = next;
+    }
+
+    return 1;
+}
+
+static void handle_input()
+{
+    int key = keyboard_input();
+    if (key == 0) {
+        return;
+    }
+
+    int low = key & 0xFF;
+
+    if ((low == 'w' || low == 'W' || key == UP || key == PAD_UP) && direction != Down) {
+        direction = Up;
+    } else if ((low == 's' || low == 'S' || key == DOWN || key == PAD_DOWN) && direction != Up) {
+        direction = Down;
+    } else if ((low == 'a' || low == 'A' || key == LEFT || key == PAD_LEFT) && direction != Right) {
+        direction = Left;
+    } else if ((low == 'd' || low == 'D' || key == RIGHT || key == PAD_RIGHT) && direction != Left) {
+        direction = Right;
+    }
+}
 
 void game_start()
 {
+    game_over = 0;
     init_snake();
-    generate_food();
-    gameover = 0;
-    while(1){
-        if (!gameover) {
-            clear();
-            draw();
-            move();
+    place_food();
+
+    while (!game_over) {
+        handle_input();
+        if (!move_snake()) {
+            game_over = 1;
+            break;
         }
-        //printf("%x ", keyboard_input());
-        keyboard();
-        sleep(500);
+
+        clear();
+        draw_board();
+        sleep(150);
     }
+
+    printf("\nGame Over! Press any key to return to the menu.\n");
+    wait_for_key_press();
 }

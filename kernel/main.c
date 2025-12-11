@@ -7,45 +7,88 @@
 #include "func.h"
 #include "global.h"
 #include "process.h"
+#include "keyboard.h"
 #include "../games/snake/snake.h"
 #include "../lib/lib.h"
 
-extern char keyboard_input(void);
+extern int keyboard_input(void);
 extern void disable_tty_output(void);
 /* 声明已有的函数，供我们调用 */
 extern void game_start();     /* 贪吃蛇，原来就有 */
 extern void clear();          /* 清屏 */
 extern int  get_ticks();      /* 时钟 tick，内核已有封装 */
 
+/* 键值工具函数 */
+static int is_enter_key(int key)
+{
+    int low = key & 0xFF;
+    return key == ENTER || key == PAD_ENTER || low == '\n' || low == '\r' || low == 0x1C || low == 0x03;
+}
+
+static void wait_for_any_key(void)
+{
+    while (keyboard_input() == 0) {}
+}
 
 /* 打印菜单（公共函数） */
 static void show_menu(void)
 {
-    printf("\n================ MuteOS Demo Menu ================\n");
-    printf("  1) Play Snake Game\n");
-    printf("  2) Show System Uptime\n");
-    printf("  3) Clear Screen\n");
-    printf("  4) About This OS\n");
-    printf("==================================================\n");
+    printf("\n============== MuteOS Demo Menu ==============\n");
+    printf("1) Play Snake Game\n");
+    printf("2) Show System Uptime\n");
+    printf("3) Clear Screen\n");
+    printf("4) About This OS\n");
+    printf("==============================================\n");
     printf("Please input 1-4 and press Enter: ");
+}
+
+static char read_menu_choice(void)
+{
+    char selection = 0;
+    while (1) {
+        int key = keyboard_input();
+        if (key == 0) {
+            continue;
+        }
+
+        int low = key & 0xFF;
+
+        if (low >= '1' && low <= '4') {
+            selection = low;
+            printf("%c", selection);
+        } else if (is_enter_key(key)) {
+            printf("\n");
+            return selection;
+        }
+    }
+}
+
+static void return_to_menu_prompt(void)
+{
+    printf("\nPress any key to return to the menu.\n");
+    wait_for_any_key();
 }
 
 /* 功能 1：贪吃蛇 */
 static void feature_snake(void)
 {
     clear();
-    printf("Entering Snake game, press ESC to quit...\n");
-    game_start();             /* 这里直接调用原来的贪吃蛇 */
-    printf("\nBack from Snake game.\n");
+    printf("Play Snake Game\n");
+    printf("Use arrow keys or WASD to move.\n");
+    printf("Eat '@' to grow and avoid the walls/body.\n\n");
+    game_start();
 }
 
 /* 功能 2：显示运行时间 */
 static void feature_uptime(void)
 {
-    int ticks = get_ticks();  /* 获取自启动以来的 tick 数 */
-    int seconds = ticks / 100;  /* 如果 1 tick = 10ms，大致是 tick/100 秒 */
+    clear();
+    int ticks_elapsed = get_ticks();
+    int seconds = ticks_elapsed / HZ;
 
-    printf("\nSystem uptime: %d ticks (~%d seconds)\n", ticks, seconds);
+    printf("System Uptime\n");
+    printf("Uptime: %d seconds\n", seconds);
+    return_to_menu_prompt();
 }
 
 /* 功能 3：清屏 */
@@ -53,17 +96,19 @@ static void feature_clear(void)
 {
     clear();
     printf("Screen cleared.\n");
+    return_to_menu_prompt();
 }
 
 /* 功能 4：关于本系统 */
 static void feature_about(void)
 {
-    printf("\nMini OS Demo by Leyu.\n");
-    printf("This OS provides 4 demo functions:\n");
-    printf("  1) Snake game\n");
-    printf("  2) Show uptime\n");
-    printf("  3) Clear screen\n");
-    printf("  4) About information\n");
+    clear();
+    printf("About MuteOS\n");
+    printf("Name: MuteOS\n");
+    printf("Author: Demo User\n");
+    printf("Version: 0.1\n");
+    printf("A small demo operating system.\n");
+    return_to_menu_prompt();
 }
 
 /*======================================================================*
@@ -174,37 +219,19 @@ PUBLIC void init_clock()
 void TestB()
 {
     disable_tty_output();  /* 关闭原来的 TTY 输出，让我们独占键盘和屏幕 */
-    clear();
-
     while (1) {
-        char choice = 0;
-
-        /* 每一轮先打印菜单 */
+        clear();
         show_menu();
 
-        /* 等待用户输入“数字 + Enter” */
-        while (1) {
-            unsigned char ch = (unsigned char)keyboard_input();
-
-            if (ch == 0) {
-                /* 没有按键就继续等 */
-                continue;
+        char choice = 0;
+        while (choice == 0) {
+            choice = read_menu_choice();
+            if (choice == 0) {
+                printf("\nInvalid choice. Please try again.\n");
+                show_menu();
             }
-
-            /* 如果按的是 1~4，就记录下来，并回显一下 */
-            if (ch >= '1' && ch <= '4') {
-                choice = (char)ch;
-                printf("%c", choice);   /* 在屏幕上显示这个数字 */
-            }
-            /* 如果按的是 Enter（用 snake.h 里定义的 ENTER 宏） */
-            else if (ch == ENTER) {
-                /* 用户按了回车，结束本轮输入 */
-                break;
-            }
-            /* 其他键直接忽略 */
         }
 
-        /* 根据最终选择的数字执行对应功能 */
         switch (choice) {
         case '1':
             feature_snake();
@@ -220,11 +247,9 @@ void TestB()
             break;
         default:
             printf("\nInvalid choice. Please enter 1-4.\n");
+            return_to_menu_prompt();
             break;
         }
-
-        /* 执行完一个功能后，清屏，然后下一轮再显示菜单 */
-        clear();
     }
 }
 
